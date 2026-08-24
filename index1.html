@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101410">
+<title>Musfit</title>
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--text:#171a17;--muted:#7a8079;--green:#19b957;--line:#e7eae6;--dark:#101410}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+.app{max-width:430px;margin:auto;min-height:100vh;padding:20px 18px 92px}
+header{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 22px}
+.logo{font-size:25px;font-weight:800;letter-spacing:-1px}.gear{width:38px;height:38px;border:0;border-radius:50%;background:#fff;font-size:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;margin-bottom:12px;box-shadow:0 3px 16px #00000008}
+.cal{display:flex;align-items:center;gap:18px}.ring{width:122px;height:122px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) 0 62%,#e9eee9 62%);position:relative}.ring:after{content:"";position:absolute;width:92px;height:92px;border-radius:50%;background:#fff}.ring b{position:relative;z-index:1;font-size:25px}.ring small{position:absolute;z-index:2;margin-top:52px;color:var(--muted);font-size:11px}.label{color:var(--muted);font-size:13px}.big{font-size:29px;font-weight:800;margin-top:3px}.bar{height:8px;background:#edf0ec;border-radius:99px;margin-top:10px;overflow:hidden}.bar i{display:block;height:100%;background:var(--green);border-radius:99px;width:62%}
+.row{display:flex;justify-content:space-between;align-items:center}.title{font-weight:750;font-size:17px}.sub{font-size:13px;color:var(--muted);margin-top:4px}
+.timer{font-size:30px;font-weight:800;letter-spacing:-1px;margin:12px 0 4px}.btn{border:0;border-radius:14px;padding:12px 15px;font-weight:750;background:var(--dark);color:#fff}.btn.green{background:var(--green)}.btn.light{background:#f0f3ef;color:var(--text)}
+.food{display:flex;justify-content:space-between;gap:12px;align-items:center}.food .kcal{color:var(--green);font-weight:800}.food p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.waterdots{display:flex;gap:8px;margin:13px 0}.drop{width:25px;height:25px;border-radius:50%;background:#e8f5ed}.drop.on{background:var(--green)}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.quick button{padding:14px 6px;border:1px solid var(--line);background:#fff;border-radius:16px;font-weight:700}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);height:70px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding-bottom:env(safe-area-inset-bottom);z-index:5}nav button{border:0;background:none;color:#777;font-size:12px}nav button.active{color:var(--green);font-weight:800}
+.screen{display:none}.screen.active{display:block}
+input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:14px;margin:6px 0 12px;font-size:16px;background:#fff}.onboard{padding-top:60px}.onboard h1{font-size:38px;letter-spacing:-2px;margin-bottom:8px}.onboard p{color:var(--muted);line-height:1.5}.spacer{height:18px}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:10}.sheet{background:#fff;width:100%;max-width:430px;margin:auto;border-radius:28px 28px 0 0;padding:20px 18px 28px}.modal.show{display:flex}
+.smallgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{font-size:23px;font-weight:800}.green{color:var(--green)}
+</style>
+</head>
+<body>
+<div id="onboard" class="app onboard" style="display:none">
+  <div class="label">KİŞİSEL SAĞLIK TAKİBİN</div><h1>Musfit</h1>
+  <p>Sade. Günlük. Anlaşılır.<br>Ne kadar yedin, ne kadar su içtin ve ne kadar aç kaldın — tek ekranda.</p>
+  <div class="spacer"></div>
+  <label>Ad</label><input id="name" placeholder="Adın">
+  <label>Kilo (kg)</label><input id="weight" type="number" value="99.4">
+  <label>Boy (cm)</label><input id="height" type="number" value="180">
+  <label>Yaş</label><input id="age" type="number" value="31">
+  <label>Hedef kilo (kg)</label><input id="target" type="number" value="85">
+  <button class="btn green" style="width:100%;margin-top:8px" onclick="saveProfile()">Musfit'i Başlat</button>
+</div>
+
+<div id="main" class="app" style="display:none">
+<header><div class="logo">Musfit</div><button class="gear" onclick="show('profile')">⚙️</button></header>
+
+<section id="home" class="screen active">
+<div class="card cal">
+ <div class="ring"><b id="remain">1850</b><small>kcal kaldı</small></div>
+ <div style="flex:1"><div class="label">Bugünkü hedef</div><div class="big" id="goal">1850 kcal</div><div class="sub" id="eatenText">0 kcal tüketildi</div><div class="bar"><i id="calbar"></i></div></div>
+</div>
+<div class="card">
+ <div class="row"><div><div class="title">Açlık</div><div class="sub">Hedef: <span id="fastGoal">16</span> saat</div></div><div class="green" id="fastStatus">Hazır</div></div>
+ <div class="timer" id="timer">00:00:00</div>
+ <div class="row"><button class="btn green" id="fastBtn" onclick="toggleFast()">Açlığı Başlat</button><button class="btn light" onclick="resetFast()">Sıfırla</button></div>
+</div>
+<div class="card">
+ <div class="row"><div><div class="title">Şimdi ne yemeli?</div><div class="sub" id="mealTime">Öğün önerisi</div></div><div class="green" id="mealKcal">≈ 480 kcal</div></div>
+ <div class="food" style="margin-top:13px"><div><b id="mealName">Izgara tavuk + salata + yoğurt</b><p id="mealDesc">Dengeli, tok tutan bir öğün</p></div><button class="btn green" onclick="addFood(480)">Ekle</button></div>
+</div>
+<div class="smallgrid">
+ <div class="card" style="margin:0"><div class="title">💧 Su</div><div class="metric"><span id="water">0</span> L</div><div class="sub">Hedef 2,5 L</div><div class="waterdots" id="dots"></div><button class="btn light" style="width:100%" onclick="addWater(.25)">+250 ml</button></div>
+ <div class="card" style="margin:0"><div class="title">🏃 Egzersiz</div><div class="metric"><span id="burned">0</span> kcal</div><div class="sub">Bugün</div><button class="btn light" style="width:100%;margin-top:22px" onclick="openExercise()">+ Egzersiz</button></div>
+</div>
+<div class="card" style="margin-top:12px"><div class="title">Hızlı ekle</div><div class="quick" style="margin-top:10px"><button onclick="addFood(300)">🍽️ 300 kcal</button><button onclick="addFood(500)">🍽️ 500 kcal</button><button onclick="addWater(.5)">💧 500 ml</button></div></div>
+</section>
+
+<section id="reports" class="screen">
+<header style="margin-top:0"><div><div class="label">BUGÜN</div><div class="logo">Rapor</div></div></header>
+<div class="card"><div class="row"><span>Alınan</span><b id="rEaten">0 kcal</b></div><div class="row" style="margin-top:14px"><span>Egzersiz</span><b id="rBurned">0 kcal</b></div><div class="row" style="margin-top:14px"><span>Su</span><b id="rWater">0 L</b></div><div class="row" style="margin-top:14px"><span>Kilo</span><b id="rWeight">99.4 kg</b></div></div>
+<div class="card"><div class="title">Hedefe kalan</div><div class="metric green" id="rTarget">14.4 kg</div><div class="sub">Başlangıçtan hedefe</div></div>
+</section>
+
+<section id="profile" class="screen">
+<header style="margin-top:0"><div class="logo">Profil</div></header>
+<div class="card"><div class="title" id="pName">Profil</div><div class="sub">Bilgilerin cihazında saklanır.</div></div>
+<div class="card">
+<label>Kilo</label><input id="pWeight" type="number">
+<label>Hedef kilo</label><input id="pTarget" type="number">
+<label>Açlık hedefi</label><select id="pFast"><option>12</option><option>14</option><option selected>16</option><option>18</option><option>20</option></select>
+<button class="btn green" style="width:100%" onclick="updateProfile()">Kaydet</button>
+</div>
+</section>
+</div>
+<nav id="nav" style="display:none"><button class="active" onclick="tab('home',this)">⌂<br>Ana Sayfa</button><button onclick="tab('reports',this)">▣<br>Rapor</button><button onclick="openExercise()">＋<br>Ekle</button><button onclick="tab('profile',this)">♙<br>Profil</button></nav>
+
+<div class="modal" id="exerciseModal"><div class="sheet"><div class="row"><div class="logo">Egzersiz</div><button class="gear" onclick="closeExercise()">✕</button></div><label>Egzersiz</label><select id="exType"><option value="walk">Yürüyüş</option><option value="run">Koşu</option><option value="bike">Bisiklet</option><option value="weights">Ağırlık</option></select><label>Dakika</label><input id="exMin" type="number" value="30"><button class="btn green" style="width:100%" onclick="addExercise()">Hesapla ve Ekle</button></div></div>
+
+<script>
+let d=JSON.parse(localStorage.getItem('musfit')||'null')||{profile:null,eaten:0,water:0,burned:0,fastStart:null,fastGoal:16};
+function save(){localStorage.setItem('musfit',JSON.stringify(d));render()}
+function saveProfile(){d.profile={name:document.getElementById('name').value||'Kullanıcı',weight:+document.getElementById('weight').value||99.4,height:+document.getElementById('height').value||180,age:+document.getElementById('age').value||31,target:+document.getElementById('target').value||85};d.fastGoal=16;save();showApp()}
+function showApp(){onboard.style.display='none';main.style.display='block';nav.style.display='flex';render()}
+function render(){
+ if(!d.profile)return;
+ let p=d.profile;let goal=Math.max(1400,Math.round((10*p.weight+6.25*p.height-5*p.age+5)*1.35-550));
+ let rem=Math.max(0,goal-d.eaten);document.getElementById('remain').textContent=rem;document.getElementById('goal').textContent=goal+' kcal';document.getElementById('eatenText').textContent=d.eaten+' kcal tüketildi';document.getElementById('calbar').style.width=Math.min(100,d.eaten/goal*100)+'%';document.getElementById('water').textContent=d.water.toFixed(2);document.getElementById('burned').textContent=d.burned;document.getElementById('rEaten').textContent=d.eaten+' kcal';document.getElementById('rBurned').textContent=d.burned+' kcal';document.getElementById('rWater').textContent=d.water.toFixed(2)+' L';document.getElementById('rWeight').textContent=p.weight+' kg';document.getElementById('rTarget').textContent=Math.max(0,p.weight-p.target).toFixed(1)+' kg';document.getElementById('fastGoal').textContent=d.fastGoal;
+ document.getElementById('pName').textContent=p.name;document.getElementById('pWeight').value=p.weight;document.getElementById('pTarget').value=p.target;document.getElementById('pFast').value=d.fastGoal;
+ let hour=new Date().getHours();let meal=hour<11?['Kahvaltı','Yumurta + peynir + yeşillik',420]:hour<16?['Öğle','Izgara tavuk + bulgur + salata',480]:['Akşam','Izgara balık + sebze + yoğurt',460];document.getElementById('mealTime').textContent=meal[0];document.getElementById('mealName').textContent=meal[1];document.getElementById('mealKcal').textContent='≈ '+meal[2]+' kcal';
+ let dots='';for(let i=0;i<10;i++)dots+='<span class="drop '+(i<Math.round(d.water/2.5*10)?'on':'')+'"></span>';document.getElementById('dots').innerHTML=dots;
+ updateTimer();
+}
+function toggleFast(){d.fastStart=d.fastStart?null:Date.now();save()}
+function resetFast(){d.fastStart=null;save()}
+function updateTimer(){let el=document.getElementById('timer');if(!el)return;if(!d.fastStart){el.textContent='00:00:00';fastBtn.textContent='Açlığı Başlat';fastStatus.textContent='Hazır';return}let s=Math.floor((Date.now()-d.fastStart)/1000);let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;el.textContent=[h,m,x].map(v=>String(v).padStart(2,'0')).join(':');fastBtn.textContent='Açlığı Bitir';fastStatus.textContent='Devam ediyor'}
+setInterval(updateTimer,1000);
+function addFood(k){d.eaten+=k;save()}function addWater(x){d.water=Math.min(10,d.water+x);save()}
+function openExercise(){exerciseModal.classList.add('show')}function closeExercise(){exerciseModal.classList.remove('show')}
+function addExercise(){let min=+exMin.value||0;let met={walk:3.5,run:8,bike:7,weights:5}[exType.value];d.burned=Math.round(met*3.5*d.profile.weight/200*min);save();closeExercise()}
+function updateProfile(){d.profile.weight=+pWeight.value||d.profile.weight;d.profile.target=+pTarget.value||d.profile.target;d.fastGoal=+pFast.value||16;save()}
+function tab(id,btn){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active')}
+if(d.profile)showApp();else{onboard.style.display='block'}
+</script>
+</body></html>
